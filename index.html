@@ -1,0 +1,1200 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Тренажёр к блиц-опросам по истории России: тесты с вариантами ответа.">
+<meta name="theme-color" content="#ECEEF2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11141B" media="(prefers-color-scheme: dark)">
+<title>Блиц по истории</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232A44A6'/%3E%3Ctext x='32' y='47' font-family='Georgia,serif' font-size='42' font-weight='700' text-anchor='middle' fill='%23fff'%3E%D0%91%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+/* Layout: one narrow column, like a page of a chronicle — list of blitz quizzes → quiz page → question card.
+   Lapis blue (icon-painting ultramarine) for actions, cinnabar for initials and numerals. */
+:root {
+  --bg: #ECEEF2;
+  --surface: #FFFFFF;
+  --surface-2: #F5F6F9;
+  --ink: #1A2030;
+  --muted: #586074;
+  --line: #D5D9E2;
+  --accent: #2A44A6;
+  --accent-soft: #E4E8F7;
+  --accent-ink: #FFFFFF;
+  --cinnabar: #B3361F;
+  --gold: #B07D1A;
+  --ok: #23784A;
+  --ok-soft: #E2F2E8;
+  --bad: #C0352B;
+  --bad-soft: #FBE6E3;
+  --font-display: "Old Standard TT", "Times New Roman", Georgia, serif;
+  --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, "Courier New", monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11141B; --surface: #191D27; --surface-2: #1F2430; --ink: #E7E9EF; --muted: #9AA2B5; --line: #2D3344;
+    --accent: #8EA2F2; --accent-soft: #232C4A; --accent-ink: #0F1426; --cinnabar: #E8735C; --gold: #D9A84C;
+    --ok: #5FC48C; --ok-soft: #173327; --bad: #F07467; --bad-soft: #3A1E1C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11141B; --surface: #191D27; --surface-2: #1F2430; --ink: #E7E9EF; --muted: #9AA2B5; --line: #2D3344;
+  --accent: #8EA2F2; --accent-soft: #232C4A; --accent-ink: #0F1426; --cinnabar: #E8735C; --gold: #D9A84C;
+  --ok: #5FC48C; --ok-soft: #173327; --bad: #F07467; --bad-soft: #3A1E1C;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+[hidden] { display: none !important; }
+.foot { font-size: 13px; color: var(--muted); }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
+button { font: inherit; color: inherit; }
+h1, h2, h3, p, ol, ul { margin: 0; }
+.wrap {
+  max-width: 720px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 72px;
+  display: flex; flex-direction: column; gap: 28px;
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.muted { color: var(--muted); }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.h2 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* buttons */
+.btn {
+  appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  border-radius: 8px; padding: 9px 14px; font-weight: 500; cursor: pointer; min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;
+  transition: border-color .15s, background-color .15s;
+}
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--muted); padding-inline: 8px; }
+.btn.ghost:hover:not(:disabled) { color: var(--ink); border-color: transparent; }
+.btn.danger { color: var(--bad); }
+.btn.small { min-height: 36px; padding: 6px 12px; font-size: 14px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: -12px; }
+.top .btn.ghost { margin-left: -8px; }
+
+/* home */
+.hero { display: flex; flex-direction: column; gap: 10px; }
+.hero h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(38px, 8vw, 54px); line-height: 1.02; letter-spacing: -0.01em; text-wrap: balance; }
+.hero h1::first-letter { color: var(--cinnabar); }
+.hero p { color: var(--muted); max-width: 54ch; }
+.qlist { display: flex; flex-direction: column; gap: 12px; }
+.qcard {
+  display: grid; grid-template-columns: auto 1fr; gap: 0 18px; align-items: start;
+  width: 100%; text-align: left; cursor: pointer;
+  padding: 18px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
+  transition: border-color .15s, transform .15s;
+}
+.qcard:hover { border-color: var(--accent); }
+.qnum { font-family: var(--font-display); font-weight: 700; font-size: 46px; line-height: .95; color: var(--cinnabar); min-width: 1.4ch; display: flex; align-items: baseline; gap: 2px; font-variant-numeric: lining-nums; }
+.qnum small { font-size: 18px; font-weight: 400; }
+.qbody { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.qeyebrow { font-size: 13px; color: var(--muted); font-weight: 500; }
+.qtitle { font-family: var(--font-display); font-size: 21px; line-height: 1.2; text-wrap: balance; }
+.qmeta { font-size: 14px; color: var(--muted); }
+.qbody .meter { margin-top: 8px; }
+.meter { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: var(--line); width: 100%; }
+.meter i { display: block; height: 100%; }
+.m-ok { background: var(--ok); }
+.m-mid { background: var(--gold); }
+.addq {
+  width: 100%; min-height: 56px; border: 1.5px dashed var(--line); background: transparent; border-radius: var(--r);
+  color: var(--accent); font-weight: 600; cursor: pointer;
+}
+.addq:hover { border-color: var(--accent); background: var(--accent-soft); }
+.empty, .notice { padding: 20px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+.empty b, .notice b { color: var(--ink); }
+
+/* quiz page */
+.qhead { display: flex; flex-direction: column; gap: 8px; }
+.qhead h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 5.6vw, 38px); line-height: 1.1; text-wrap: balance; }
+.qhead p { color: var(--muted); font-size: 15px; }
+.section { display: flex; flex-direction: column; gap: 12px; }
+.row-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.mode-main {
+  display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; align-items: center; width: 100%; text-align: left; cursor: pointer;
+  padding: 18px 20px; border-radius: var(--r); border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink);
+}
+.mode-main:hover { filter: brightness(1.08); }
+.mm-title { font-size: 20px; font-weight: 600; }
+.mm-desc { grid-column: 1; font-size: 15px; opacity: .85; }
+.mm-go { grid-column: 2; grid-row: 1 / span 2; font-weight: 600; white-space: nowrap; }
+.modes { display: grid; gap: 10px; }
+.mode {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; cursor: pointer; min-width: 0;
+  padding: 12px 14px; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface);
+}
+.mode:hover:not(:disabled) { border-color: var(--accent); }
+.mode b { font-weight: 600; }
+.mode span { font-size: 14px; color: var(--muted); }
+.mode:disabled { cursor: not-allowed; opacity: .55; }
+.dirrow { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.seg { display: inline-flex; padding: 3px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); flex-wrap: wrap; align-self: flex-start; max-width: 100%; }
+.seg button { border: 0; background: transparent; padding: 7px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: var(--muted); font-weight: 500; }
+.seg button[aria-checked="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.hint { font-size: 14px; color: var(--muted); }
+.mastery { display: grid; grid-template-columns: max-content 1fr max-content; gap: 10px 14px; align-items: center; }
+.mastery .lbl { font-weight: 500; }
+.mastery .num { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.legend { display: flex; gap: 6px 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; background: var(--line); }
+.dot.ok { background: var(--ok); }
+.dot.mid { background: var(--gold); }
+.history { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.history li { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 15px; align-items: baseline; }
+.history .when { color: var(--muted); font-size: 13px; }
+.history .sc { font-variant-numeric: tabular-nums; font-weight: 600; }
+.plain { list-style: none; padding: 0; }
+.dz { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 16px; }
+.confirm { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: var(--r); background: var(--bad-soft); width: 100%; }
+.confirm .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* run */
+.runbar { display: flex; align-items: center; gap: 12px; }
+.runbar .btn.ghost { margin-left: -8px; flex: none; }
+.steps { display: flex; gap: 4px; flex: 1; min-width: 0; }
+.steps.dense { gap: 2px; }
+.steps i { flex: 1; height: 6px; border-radius: 3px; background: var(--line); min-width: 2px; }
+.steps i.cur { background: var(--accent); }
+.steps i.ok { background: var(--ok); }
+.steps i.bad { background: var(--bad); }
+.count { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; flex: none; }
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.card.enter { animation: rise .22s ease-out; }
+@keyframes rise { from { transform: translateY(6px); opacity: .5; } to { transform: none; opacity: 1; } }
+.qtop { display: flex; flex-direction: column; gap: 8px; }
+.chip { display: inline-flex; align-self: flex-start; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.ask { color: var(--muted); font-size: 15px; }
+.prompt { font-family: var(--font-display); font-size: clamp(23px, 4.8vw, 30px); line-height: 1.25; text-wrap: pretty; overflow-wrap: anywhere; }
+.prompt.long { font-family: var(--font-body); font-size: 19px; line-height: 1.5; }
+.prompt.mono { font-family: var(--font-mono); font-size: clamp(34px, 8vw, 44px); font-weight: 600; letter-spacing: -0.01em; }
+.opts { display: flex; flex-direction: column; gap: 10px; }
+.opt {
+  display: grid; grid-template-columns: 28px 1fr; gap: 12px; align-items: center; text-align: left; width: 100%;
+  padding: 12px 14px; min-height: 54px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface-2); cursor: pointer;
+  transition: border-color .15s, background-color .15s, opacity .15s;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+.opt:disabled { cursor: default; opacity: 1; }
+.opt .k { width: 28px; height: 28px; border-radius: 6px; display: grid; place-items: center; font-family: var(--font-mono); font-size: 13px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+.opt .t { min-width: 0; overflow-wrap: anywhere; }
+.opt .t.mono { font-size: 18px; font-weight: 500; }
+.opt .t.small { font-size: 15px; line-height: 1.45; }
+.opt.ok { border-color: var(--ok); background: var(--ok-soft); }
+.opt.ok .k { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+.opt.bad { border-color: var(--bad); background: var(--bad-soft); }
+.opt.bad .k { background: var(--bad); border-color: var(--bad); color: var(--surface); }
+.opt.dim { opacity: .5; }
+.feedback { display: flex; align-items: center; justify-content: space-between; gap: 12px 16px; flex-wrap: wrap; padding: 12px 14px 12px 16px; border-radius: var(--r); }
+.feedback.ok { background: var(--ok-soft); }
+.feedback.bad { background: var(--bad-soft); }
+.feedback .verdict { font-weight: 600; }
+.feedback.ok .verdict { color: var(--ok); }
+.feedback.bad .verdict { color: var(--bad); }
+.feedback .fb { min-width: 0; flex: 1 1 220px; }
+.keys { font-size: 13px; color: var(--muted); text-align: center; }
+@media (hover: none) { .keys { display: none; } }
+
+/* result */
+.score { display: flex; align-items: baseline; gap: 12px; }
+.score .big { font-family: var(--font-display); font-weight: 700; font-size: 84px; line-height: .9; color: var(--cinnabar); font-variant-numeric: lining-nums; }
+.score .of { font-family: var(--font-display); font-size: 28px; color: var(--muted); }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.review { list-style: none; padding: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.review li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.review .mk { font-weight: 700; line-height: 1.5; }
+.review .mk.ok { color: var(--ok); }
+.review .mk.bad { color: var(--bad); }
+.review .pair { min-width: 0; overflow-wrap: anywhere; }
+.review .pair b { font-weight: 600; }
+.review .yours { font-size: 14px; color: var(--bad); margin-top: 2px; }
+
+/* list */
+.cards { list-style: none; padding: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.cards li { display: grid; grid-template-columns: 12px minmax(120px, 190px) 1fr; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+.cards .dot { align-self: center; }
+.cards .ans { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.cards .ans.mono { font-weight: 500; }
+.cards .pr { min-width: 0; color: var(--ink); overflow-wrap: anywhere; }
+.cards .ans.hide { background: var(--line); color: transparent; border-radius: 4px; cursor: pointer; user-select: none; }
+.cards .ans.hide.shown { background: transparent; color: var(--ink); }
+.switch { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); cursor: pointer; }
+.switch input { width: 18px; height: 18px; accent-color: var(--accent); }
+@media (max-width: 540px) {
+  .cards li { grid-template-columns: 12px 1fr; }
+  .cards .pr { grid-column: 2; }
+}
+
+/* import */
+.drop {
+  display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+  padding: 28px 20px; border: 1.5px dashed var(--line); border-radius: var(--r); background: var(--surface);
+}
+.drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.drop input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.fmt { font-size: 14px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+.fmt table { border-collapse: collapse; font-size: 14px; }
+.fmt td { border: 1px solid var(--line); padding: 4px 10px; color: var(--ink); }
+.fmt tr:first-child td { font-weight: 600; }
+.fields { display: grid; grid-template-columns: 110px 1fr; gap: 12px; }
+.fields .full { grid-column: 1 / -1; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field span { font-size: 13px; color: var(--muted); font-weight: 500; }
+.field input {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); color: var(--ink); font: inherit; min-height: 44px;
+}
+.ticket-in { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.err { color: var(--bad); font-weight: 500; }
+.warn { padding: 10px 14px; border-radius: 8px; background: var(--bad-soft); color: var(--ink); font-size: 14px; }
+.preview { max-height: 360px; overflow: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); padding: 4px 14px; }
+.preview h3 { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 12px 0 6px; }
+.preview .cards li { grid-template-columns: minmax(110px, 170px) 1fr; }
+@media (max-width: 540px) { .preview .cards li { grid-template-columns: 1fr; gap: 2px; } }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px; font-size: 15px; z-index: 20;
+  max-width: calc(100% - 32px);
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<main id="app" class="wrap" aria-live="polite"></main>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<!-- Встроенные блиц-опросы. Чтобы добавить новый для всех устройств, допишите объект в этот массив. -->
+<script id="quiz-data" type="application/json">
+[
+ {
+  "id": "blitz-3",
+  "title": "Блиц-опрос №3",
+  "subtitle": "Русь и монголы. Становление и развитие Московского государства",
+  "note": "15 дат по истории русских земель в XIII–XV вв., 15 терминов, 10 имён исторических деятелей",
+  "number": 3,
+  "order": 3,
+  "ticket": {
+   "date": 2,
+   "term": 2,
+   "person": 1
+  },
+  "items": [
+   {
+    "id": "d1",
+    "cat": "date",
+    "answer": "1223",
+    "prompt": "Битва на реке Калке"
+   },
+   {
+    "id": "d2",
+    "cat": "date",
+    "answer": "1237–1238",
+    "prompt": "Поход хана Батыя на Северо-Восточную Русь"
+   },
+   {
+    "id": "d3",
+    "cat": "date",
+    "answer": "1240",
+    "prompt": "Поход хана Батыя на Киев"
+   },
+   {
+    "id": "d4",
+    "cat": "date",
+    "answer": "1240",
+    "prompt": "Невская битва"
+   },
+   {
+    "id": "d5",
+    "cat": "date",
+    "answer": "1242",
+    "prompt": "Ледовое побоище"
+   },
+   {
+    "id": "d6",
+    "cat": "date",
+    "answer": "1242",
+    "prompt": "Образование Золотой Орды"
+   },
+   {
+    "id": "d7",
+    "cat": "date",
+    "answer": "1325–1340",
+    "prompt": "Княжение Ивана Калиты"
+   },
+   {
+    "id": "d8",
+    "cat": "date",
+    "answer": "1380",
+    "prompt": "Куликовская битва"
+   },
+   {
+    "id": "d9",
+    "cat": "date",
+    "answer": "1425–1462",
+    "prompt": "Княжение Василия II Тёмного"
+   },
+   {
+    "id": "d10",
+    "cat": "date",
+    "answer": "1425–1453",
+    "prompt": "Междоусобная (феодальная) война в Московском княжестве"
+   },
+   {
+    "id": "d11",
+    "cat": "date",
+    "answer": "1462–1505",
+    "prompt": "Княжение Ивана III"
+   },
+   {
+    "id": "d12",
+    "cat": "date",
+    "answer": "1478",
+    "prompt": "Присоединение Новгорода к Московскому государству"
+   },
+   {
+    "id": "d13",
+    "cat": "date",
+    "answer": "1480",
+    "prompt": "Стояние на реке Угре"
+   },
+   {
+    "id": "d14",
+    "cat": "date",
+    "answer": "1485",
+    "prompt": "Присоединение Тверского княжества к Москве"
+   },
+   {
+    "id": "d15",
+    "cat": "date",
+    "answer": "1497",
+    "prompt": "Издание Судебника Ивана III"
+   },
+   {
+    "id": "t1",
+    "cat": "term",
+    "answer": "Баскаки",
+    "prompt": "Представители хана, собиравшие дань и следившие за исполнением ханских повелений на завоёванных землях."
+   },
+   {
+    "id": "t2",
+    "cat": "term",
+    "answer": "Ярлык",
+    "prompt": "Письменный документ, подтверждающий волю хана. В Древней Руси давал право князю на управление землями и долю от собранной дани."
+   },
+   {
+    "id": "t3",
+    "cat": "term",
+    "answer": "Выход",
+    "prompt": "Дань, налог, выплачивавшийся русскими землями Золотой Орде в XIII–XV веках."
+   },
+   {
+    "id": "t4",
+    "cat": "term",
+    "answer": "Судебник",
+    "prompt": "Свод законов в Московском государстве XV–XVI вв."
+   },
+   {
+    "id": "t5",
+    "cat": "term",
+    "answer": "Вотчина",
+    "prompt": "Вид феодальной земельной собственности: родовое, наследственное земельное владение в Древней Руси (у князей, бояр, церкви)."
+   },
+   {
+    "id": "t6",
+    "cat": "term",
+    "answer": "Поместье",
+    "prompt": "Разновидность земельного владения, предоставлявшегося пожизненно за воинскую или государственную службу."
+   },
+   {
+    "id": "t7",
+    "cat": "term",
+    "answer": "Бояре",
+    "prompt": "Высший слой феодального общества в Древней Руси, ближайшее окружение князя. Играли ведущую роль (после великого князя) в управлении государством."
+   },
+   {
+    "id": "t8",
+    "cat": "term",
+    "answer": "Дворяне",
+    "prompt": "Военно-служилое сословие, получавшее землю за службу. Изначально — служащие при княжеском дворе."
+   },
+   {
+    "id": "t9",
+    "cat": "term",
+    "answer": "Юрьев день",
+    "prompt": "День, когда крестьяне имели право на переход от одного помещика к другому. Другое название — «крестьянский выход»."
+   },
+   {
+    "id": "t10",
+    "cat": "term",
+    "answer": "Запись в число",
+    "prompt": "Перепись населения, которую вели баскаки с целью высчитать размер собираемой дани."
+   },
+   {
+    "id": "t11",
+    "cat": "term",
+    "answer": "Нестяжатели",
+    "prompt": "Идейное направление в среде русского духовенства XV–XVI вв., за отказ Церкви от владения сёлами и эксплуатации труда крестьян."
+   },
+   {
+    "id": "t12",
+    "cat": "term",
+    "answer": "Иосифляне",
+    "prompt": "Идейное направление в среде русского духовенства XV–XVI вв., за сохранение церковно-монастырского землевладения."
+   },
+   {
+    "id": "t13",
+    "cat": "term",
+    "answer": "Митрополит",
+    "prompt": "Глава Русской православной церкви до учреждения патриаршества в 1589 г."
+   },
+   {
+    "id": "t14",
+    "cat": "term",
+    "answer": "Тягло",
+    "prompt": "Система денежных и натуральных государственных повинностей крестьян и посадских людей в XV — начале XVIII вв."
+   },
+   {
+    "id": "t15",
+    "cat": "term",
+    "answer": "Челобитная",
+    "prompt": "Письменное прошение, при подаче которого кланялись с прикосновением лба к земле."
+   },
+   {
+    "id": "p1",
+    "cat": "person",
+    "answer": "Александр Невский",
+    "prompt": "Новгородский князь, победитель Невской битвы и Ледового побоища, заключил мир с наиболее сильным врагом — Золотой Ордой."
+   },
+   {
+    "id": "p2",
+    "cat": "person",
+    "answer": "Чингисхан",
+    "prompt": "Основатель и первый великий хан Монгольской империи, организовавший завоевательные походы в Китай, Среднюю Азию, Ближний Восток, на Кавказ и в Восточную Европу."
+   },
+   {
+    "id": "p3",
+    "cat": "person",
+    "answer": "Хан Батый",
+    "prompt": "Второй сын Джучи, внук Чингисхана. Фактический основатель Золотой Орды. Возглавил поход против половцев, Волжской Булгарии, русских княжеств, Польши, Венгрии и Далмации."
+   },
+   {
+    "id": "p4",
+    "cat": "person",
+    "answer": "Даниил Александрович",
+    "prompt": "Младший сын Александра Невского, первый удельный князь Московский; родоначальник московской линии Рюриковичей: московских князей, великих князей и царей."
+   },
+   {
+    "id": "p5",
+    "cat": "person",
+    "answer": "Иван Калита",
+    "prompt": "Московский князь, получивший своё прозвище, по одной из версий, за бережливость. В его правление Москва значительно усилилась, а ордынцы не совершали набеги на Залесскую Русь."
+   },
+   {
+    "id": "p6",
+    "cat": "person",
+    "answer": "Хан Мамай",
+    "prompt": "Темник Золотой Орды, войско которого в 1380 г. было разбито в Куликовской битве во время нового похода на Московское княжество."
+   },
+   {
+    "id": "p7",
+    "cat": "person",
+    "answer": "Дмитрий Донской",
+    "prompt": "Князь, получивший прозвище за победу в Куликовской битве. При нём Московское княжество стало главным центром объединения русских земель; был построен белокаменный Московский Кремль."
+   },
+   {
+    "id": "p8",
+    "cat": "person",
+    "answer": "Сергий Радонежский",
+    "prompt": "Игумен Русской церкви, основатель ряда монастырей, в том числе Свято-Троицкого монастыря под Москвой. По легенде, благословил Дмитрия Донского на битву с Мамаем."
+   },
+   {
+    "id": "p9",
+    "cat": "person",
+    "answer": "Василий II Тёмный",
+    "prompt": "Этот князь неоднократно терял великокняжеский престол и вновь возвращал его. Ликвидировал почти все мелкие уделы внутри Московского княжества. При нём Москва де-факто вышла из-под влияния Литовского княжества и Золотой Орды."
+   },
+   {
+    "id": "p10",
+    "cat": "person",
+    "answer": "Иван III",
+    "prompt": "Результатом его правления стало окончательное освобождение страны от ордынской зависимости и объединение значительной части русских земель вокруг Москвы (включая Новгород и Тверь), за что он получил прозвище «собиратель земли русской»."
+   }
+  ],
+  "source": "Blits-opros_3.docx"
+ }
+]
+</script>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- constants ---------- */
+const CATS = {
+  date:   { label: 'Дата',     plural: 'Даты',     forms: ['дата', 'даты', 'дат'],
+            ask: 'Когда это было?', rask: a => /[–-]/.test(a) ? 'Что происходило в эти годы?' : 'Что произошло в этом году?' },
+  term:   { label: 'Термин',   plural: 'Термины',  forms: ['термин', 'термина', 'терминов'],
+            ask: 'Какой это термин?', rask: () => 'Что означает этот термин?' },
+  person: { label: 'Личность', plural: 'Личности', forms: ['личность', 'личности', 'личностей'],
+            ask: 'О ком идёт речь?', rask: () => 'Чем известен этот человек?' },
+};
+const CAT_ORDER = ['date', 'term', 'person'];
+const MODES = { ticket: 'Билет', all: 'Все вопросы', date: 'Только даты', term: 'Только термины', person: 'Только личности', weak: 'Работа над ошибками', retry: 'Повтор ошибок' };
+const DIRS = { direct: 'Как на опросе', reverse: 'Обратно', mixed: 'Вперемешку' };
+const DIR_HINT = {
+  direct: 'Событие → дата, определение → термин, описание → личность. Так спрашивают на блиц-опросе.',
+  reverse: 'Дата → событие, термин → определение, личность → описание.',
+  mixed: 'Оба направления в случайном порядке.',
+};
+const Q_FORMS = ['вопрос', 'вопроса', 'вопросов'];
+const LS_PROGRESS = 'blitz-progress-v1', LS_DIR = 'blitz-dir', LS_HIDE = 'blitz-hide-answers';
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const plural = (n, f) => { const a = Math.abs(n) % 100, b = a % 10; if (a > 10 && a < 20) return f[2]; if (b > 1 && b < 5) return f[1]; if (b === 1) return f[0]; return f[2]; };
+const shuffle = arr => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const norm = s => String(s).toLowerCase().replace(/ё/g, 'е').replace(/[\s ]+/g, ' ').replace(/[–—‑-]/g, '-').trim();
+const yearOf = s => { const m = String(s).match(/\d{3,4}/); return m ? +m[0] : NaN; };
+const isDateLike = s => /^\s*\d{3,4}/.test(s);
+const fixDate = s => String(s).replace(/\s*[-–—‑]+\s*/g, '–').trim();
+const pct = (a, n) => n ? Math.round(a / n * 1000) / 10 : 0;
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } }
+function when(t) {
+  if (!t) return '';
+  const d = new Date(t), now = new Date();
+  const hm = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  if (d.toDateString() === now.toDateString()) return 'сегодня, ' + hm;
+  const y = new Date(now); y.setDate(now.getDate() - 1);
+  if (d.toDateString() === y.toDateString()) return 'вчера, ' + hm;
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) + ', ' + hm;
+}
+
+/* ---------- state ---------- */
+const S = {
+  db: null, uid: null, canEdit: true,
+  dbState: 'ready',
+  quizzes: [],
+  progress: lsGet(LS_PROGRESS, {}) || {},
+  dir: DIRS[lsGet(LS_DIR, 'direct')] ? lsGet(LS_DIR, 'direct') : 'direct',
+  hideAns: !!lsGet(LS_HIDE, false),
+  view: 'home', qid: null, run: null, result: null, imp: null, confirm: null,
+  progressReadOnly: false, pushedLocal: false,
+};
+let autoTimer = 0, lastScrollKey = '';
+
+/* ---------- quiz data ---------- */
+function cleanQuiz(id, d) {
+  if (!d || !Array.isArray(d.items)) return null;
+  const items = d.items
+    .filter(it => it && CATS[it.cat] && typeof it.answer === 'string' && typeof it.prompt === 'string' && it.answer.trim() && it.prompt.trim())
+    .map((it, i) => ({ id: String(it.id || (it.cat[0] + i)), cat: it.cat, answer: it.answer.trim(), prompt: it.prompt.trim() }));
+  if (!items.length) return null;
+  const t = d.ticket && typeof d.ticket === 'object' ? d.ticket : {};
+  const ticket = {};
+  CAT_ORDER.forEach(c => { const v = Math.round(+t[c]); ticket[c] = Number.isFinite(v) ? Math.max(0, Math.min(20, v)) : 0; });
+  if (!CAT_ORDER.some(c => ticket[c] > 0)) Object.assign(ticket, { date: 2, term: 2, person: 1 });
+  const num = d.number == null || d.number === '' ? null : +d.number;
+  return {
+    id, items, ticket,
+    title: String(d.title || 'Блиц-опрос'),
+    subtitle: String(d.subtitle || ''),
+    note: String(d.note || ''),
+    number: Number.isFinite(num) ? num : null,
+    order: Number.isFinite(+d.order) ? +d.order : 999,
+  };
+}
+const curQuiz = () => S.quizzes.find(q => q.id === S.qid) || null;
+const catItems = (q, c) => q.items.filter(i => i.cat === c);
+
+/* ---------- progress ---------- */
+const statsOf = qid => (S.progress[qid] && S.progress[qid].stats) || {};
+function status(st) { if (!st || !((st.c || 0) + (st.w || 0))) return 'new'; return (st.s || 0) >= 2 ? 'ok' : 'mid'; }
+function mastery(q, cat) {
+  const st = statsOf(q.id); let ok = 0, mid = 0, n = 0;
+  q.items.forEach(it => { if (cat && it.cat !== cat) return; n++; const s = status(st[it.id]); if (s === 'ok') ok++; else if (s === 'mid') mid++; });
+  return { ok, mid, n };
+}
+function weakItems(q) { const st = statsOf(q.id); return q.items.filter(it => { const s = st[it.id]; return s && (s.w || 0) > 0 && (s.s || 0) < 2; }); }
+function ensureProgress(qid) {
+  const p = S.progress[qid] || (S.progress[qid] = { stats: {}, runs: [] });
+  if (!p.stats || typeof p.stats !== 'object') p.stats = {};
+  if (!Array.isArray(p.runs)) p.runs = [];
+  return p;
+}
+
+function saveProgress() { lsSet(LS_PROGRESS, S.progress); }
+
+/* ---------- building a test ---------- */
+function makeQ(quiz, it, dir) {
+  const reverse = dir === 'reverse' || (dir === 'mixed' && Math.random() < 0.5);
+  const key = reverse ? 'prompt' : 'answer';
+  const same = quiz.items.filter(x => x.cat === it.cat && x.id !== it.id && norm(x.answer) !== norm(it.answer));
+  const seen = new Set([norm(it[key])]);
+  let pool = [];
+  for (const x of same) { const k = norm(x[key]); if (!seen.has(k)) { seen.add(k); pool.push(x); } }
+  if (it.cat === 'date') {
+    const y = yearOf(it.answer);
+    if (!isNaN(y)) pool = pool.slice().sort((a, b) => Math.abs(yearOf(a.answer) - y) - Math.abs(yearOf(b.answer) - y)).slice(0, 6);
+  }
+  const distract = shuffle(pool).slice(0, 3).map(x => ({ text: x[key], ok: false }));
+  return { item: it, reverse, options: shuffle([{ text: it[key], ok: true }, ...distract]), picked: null };
+}
+function buildRun(quiz, mode, items) {
+  let list = [];
+  if (mode === 'ticket') CAT_ORDER.forEach(c => list.push(...shuffle(catItems(quiz, c)).slice(0, quiz.ticket[c] || 0)));
+  else if (mode === 'all') list = shuffle(quiz.items);
+  else if (CATS[mode]) list = shuffle(catItems(quiz, mode));
+  else if (mode === 'weak') list = shuffle(weakItems(quiz));
+  else if (mode === 'retry') list = shuffle(items || []);
+  if (!list.length) return null;
+  return { qid: quiz.id, mode, dir: S.dir, i: 0, qs: list.map(it => makeQ(quiz, it, S.dir)), retryItems: mode === 'retry' ? items : null };
+}
+function startRun(mode, items) {
+  const quiz = curQuiz(); if (!quiz) return;
+  const r = buildRun(quiz, mode, items);
+  if (!r) { toast('В этом режиме пока нет вопросов'); return; }
+  clearTimeout(autoTimer);
+  S.run = r; S.result = null; S.confirm = null;
+  go('run');
+}
+function pick(idx) {
+  const r = S.run; if (!r) return;
+  const q = r.qs[r.i]; if (!q || q.picked !== null || !q.options[idx]) return;
+  q.picked = idx;
+  const ok = q.options[idx].ok;
+  const p = ensureProgress(r.qid);
+  const st = p.stats[q.item.id] || (p.stats[q.item.id] = { c: 0, w: 0, s: 0 });
+  if (ok) { st.c = (st.c || 0) + 1; st.s = (st.s || 0) + 1; } else { st.w = (st.w || 0) + 1; st.s = 0; }
+  st.t = Date.now();
+  saveProgress(r.qid);
+  render();
+  clearTimeout(autoTimer);
+  if (ok) autoTimer = setTimeout(next, 900);
+}
+function next() {
+  clearTimeout(autoTimer);
+  const r = S.run; if (!r || S.view !== 'run') return;
+  if (r.qs[r.i].picked === null) return;
+  if (r.i < r.qs.length - 1) { r.i++; render(); }
+  else finishRun();
+}
+function finishRun() {
+  const r = S.run; if (!r) return;
+  const score = r.qs.filter(q => q.options[q.picked] && q.options[q.picked].ok).length;
+  const p = ensureProgress(r.qid);
+  p.runs.push({ m: r.mode, d: r.dir, sc: score, n: r.qs.length, t: Date.now() });
+  p.runs = p.runs.slice(-15);
+  saveProgress(r.qid);
+  S.result = { qid: r.qid, mode: r.mode, dir: r.dir, qs: r.qs, score, retryItems: r.retryItems };
+  S.run = null;
+  go('result');
+}
+
+/* ---------- views ---------- */
+function meter(m) {
+  return `<span class="meter" role="img" aria-label="Выучено ${m.ok} из ${m.n}, в работе ${m.mid}"><i class="m-ok" style="width:${pct(m.ok, m.n)}%"></i><i class="m-mid" style="width:${pct(m.mid, m.n)}%"></i></span>`;
+}
+function countsLine(q) {
+  return CAT_ORDER.map(c => { const n = catItems(q, c).length; return n ? `${n} ${plural(n, CATS[c].forms)}` : ''; }).filter(Boolean).join(' · ');
+}
+function vHome() {
+  let list;
+  if (!S.quizzes.length) list = `<div class="empty"><b>Пока нет ни одного опроса.</b> Добавьте первый из файла .docx — кнопка ниже.</div>`;
+  else list = S.quizzes.map(q => {
+    const m = mastery(q);
+    return `<button class="qcard" data-act="open" data-id="${esc(q.id)}">
+      <span class="qnum">${q.number != null ? `<small>№</small>${esc(q.number)}` : '·'}</span>
+      <span class="qbody">
+        <span class="qeyebrow">${esc(q.title)}</span>
+        <span class="qtitle">${esc(q.subtitle || q.title)}</span>
+        <span class="qmeta">${countsLine(q)}</span>
+        ${meter(m)}
+        <span class="qmeta">Выучено ${m.ok} из ${m.n}${m.mid ? ` · в работе ${m.mid}` : ''}</span>
+      </span></button>`;
+  }).join('');
+  const add = `<button class="addq" data-act="import">+ Добавить блиц-опрос из .docx</button>`;
+  return `<header class="hero">
+      <div class="eyebrow">История России · подготовка к блиц-опросам</div>
+      <h1>Блиц по истории</h1>
+      <p>Тест с вариантами ответа. Каждый блиц-опрос — отдельный тест: вопросы и варианты берутся только из его темы.</p>
+    </header>
+    <section class="qlist" aria-label="Блиц-опросы">${list}${add}</section>
+    <p class="foot">Прогресс и опросы, добавленные из .docx, хранятся в этом браузере.</p>`;
+}
+function vMissing() {
+  if (S.dbState === 'loading') return `<div class="empty">Загружаем опрос…</div>`;
+  return `<div class="top"><button class="btn ghost" data-act="home">← Все опросы</button></div><div class="empty"><b>Этого опроса больше нет.</b> Вернитесь к списку опросов.</div>`;
+}
+function vQuiz() {
+  const q = curQuiz(); if (!q) return vMissing();
+  const weak = weakItems(q).length;
+  const tkParts = CAT_ORDER.filter(c => q.ticket[c] && catItems(q, c).length).map(c => `${q.ticket[c]} ${plural(q.ticket[c], CATS[c].forms)}`);
+  const tkN = CAT_ORDER.reduce((s, c) => s + Math.min(q.ticket[c] || 0, catItems(q, c).length), 0);
+  const cats = CAT_ORDER.filter(c => catItems(q, c).length);
+  const runs = ((S.progress[q.id] && S.progress[q.id].runs) || []).slice(-5).reverse();
+  const confirm = S.confirm === 'reset'
+    ? `<div class="confirm"><div>Сбросить ваш прогресс по «${esc(q.title)}»? Счётчики выученных карточек и история попыток обнулятся.</div><div class="acts"><button class="btn danger" data-act="do-reset">Сбросить</button><button class="btn ghost" data-act="cancel">Отмена</button></div></div>`
+    : S.confirm === 'delete'
+    ? `<div class="confirm"><div>Удалить «${esc(q.title)}» из приложения? Вопросы пропадут, их можно будет снова загрузить из .docx.</div><div class="acts"><button class="btn danger" data-act="do-delete">Удалить</button><button class="btn ghost" data-act="cancel">Отмена</button></div></div>`
+    : `<button class="btn small" data-act="ask-reset">Сбросить прогресс</button>${q.local ? `<button class="btn small danger" data-act="ask-delete">Удалить опрос</button>` : ''}`;
+  return `<div class="top"><button class="btn ghost" data-act="home">← Все опросы</button></div>
+    <header class="qhead">
+      <div class="eyebrow">${esc(q.title)}</div>
+      <h1>${esc(q.subtitle || q.title)}</h1>
+      ${q.note ? `<p>${esc(q.note)}</p>` : ''}
+    </header>
+    <section class="section" aria-labelledby="h-start">
+      <h2 class="h2" id="h-start">Начать тест</h2>
+      <button class="mode-main" data-act="start" data-mode="ticket">
+        <span class="mm-title">Билет · ${tkN} ${plural(tkN, Q_FORMS)}</span>
+        <span class="mm-desc">${tkParts.join(', ')} — как на блиц-опросе</span>
+        <span class="mm-go">Начать →</span>
+      </button>
+      <div class="modes" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+        <button class="mode" data-act="start" data-mode="all"><b>Все вопросы</b><span>${q.items.length} ${plural(q.items.length, Q_FORMS)}</span></button>
+        <button class="mode" data-act="start" data-mode="weak" ${weak ? '' : 'disabled'}><b>Работа над ошибками</b><span>${weak ? `${weak} ${plural(weak, Q_FORMS)}` : 'ошибок пока нет'}</span></button>
+      </div>
+      <div class="modes" style="grid-template-columns:repeat(${cats.length},minmax(0,1fr))">
+        ${cats.map(c => `<button class="mode" data-act="start" data-mode="${c}"><b>${CATS[c].plural}</b><span>${catItems(q, c).length}</span></button>`).join('')}
+      </div>
+      <div class="dirrow">
+        <div class="seg" role="radiogroup" aria-label="Направление вопросов">
+          ${Object.keys(DIRS).map(k => `<button role="radio" aria-checked="${S.dir === k}" data-act="dir" data-dir="${k}">${DIRS[k]}</button>`).join('')}
+        </div>
+        <p class="hint">${DIR_HINT[S.dir]}</p>
+      </div>
+    </section>
+    <section class="section" aria-labelledby="h-prog">
+      <div class="row-between"><h2 class="h2" id="h-prog">Прогресс</h2><button class="btn small" data-act="list">Все карточки</button></div>
+      <div class="mastery">
+        ${cats.map(c => { const m = mastery(q, c); return `<span class="lbl">${CATS[c].plural}</span>${meter(m)}<span class="num">${m.ok} / ${m.n}</span>`; }).join('')}
+      </div>
+      <div class="legend"><span><i class="dot ok"></i>выучено — 2 верных ответа подряд</span><span><i class="dot mid"></i>в работе</span><span><i class="dot"></i>ещё не встречалось</span></div>
+      ${runs.length ? `<ul class="history plain">${runs.map(x => `<li><span>${esc(MODES[x.m] || 'Тест')}${x.d && x.d !== 'direct' ? ` · ${esc((DIRS[x.d] || '').toLowerCase())}` : ''}</span><span class="when">${esc(when(x.t))}</span><span class="sc">${x.sc} / ${x.n}</span></li>`).join('')}</ul>` : ''}
+      ${S.progressReadOnly ? `<p class="hint">Прогресс сохраняется только в этом браузере.</p>` : ''}
+    </section>
+    <div class="dz">${confirm}</div>`;
+}
+function vRun() {
+  const r = S.run; const quiz = curQuiz();
+  if (!r || !quiz) return vMissing();
+  const q = r.qs[r.i];
+  const cat = CATS[q.item.cat];
+  const ask = q.reverse ? cat.rask(q.item.answer) : cat.ask;
+  const shown = q.reverse ? q.item.answer : q.item.prompt;
+  const promptCls = q.reverse && q.item.cat === 'date' ? 'mono' : (shown.length > 90 ? 'long' : '');
+  const optCls = !q.reverse && q.item.cat === 'date' ? 'mono' : (q.reverse ? 'small' : '');
+  const answered = q.picked !== null;
+  const ok = answered && q.options[q.picked].ok;
+  const last = r.i === r.qs.length - 1;
+  const steps = r.qs.map((x, i) => `<i class="${x.picked === null ? (i === r.i ? 'cur' : '') : (x.options[x.picked].ok ? 'ok' : 'bad')}"></i>`).join('');
+  const correctText = q.options.find(o => o.ok).text;
+  let fb = '';
+  if (answered) {
+    const detail = ok
+      ? (!q.reverse && q.item.cat === 'date' ? `<div><span class="mono">${esc(q.item.answer)}</span> — ${esc(q.item.prompt)}</div>` : '')
+      : (q.reverse ? `<div>Правильный вариант выделен зелёным.</div>` : `<div>Правильно: <b>${esc(correctText)}</b></div>`);
+    fb = `<div class="feedback ${ok ? 'ok' : 'bad'}" role="status">
+      <div class="fb"><div class="verdict">${ok ? 'Верно' : 'Неверно'}</div>${detail}</div>
+      <button class="btn primary" id="next-btn" data-act="next">${last ? 'Результат' : 'Дальше'} →</button></div>`;
+  }
+  return `<div class="runbar">
+      <button class="btn ghost" data-act="exit" aria-label="Выйти из теста">✕ Выйти</button>
+      <div class="steps ${r.qs.length > 20 ? 'dense' : ''}" aria-hidden="true">${steps}</div>
+      <span class="count">${r.i + 1} / ${r.qs.length}</span>
+    </div>
+    <article class="card ${q.picked === null ? 'enter' : ''}">
+      <div class="qtop">
+        <span class="chip">${cat.label}</span>
+        <div class="ask">${esc(ask)}</div>
+        <div class="prompt ${promptCls}">${esc(shown)}</div>
+      </div>
+      <div class="opts" role="group" aria-label="Варианты ответа">
+        ${q.options.map((o, i) => {
+          let cls = '';
+          if (answered) cls = o.ok ? 'ok' : (i === q.picked ? 'bad' : 'dim');
+          return `<button class="opt ${cls}" data-act="pick" data-i="${i}" ${answered ? 'disabled' : ''}><span class="k">${i + 1}</span><span class="t ${optCls}">${esc(o.text)}</span></button>`;
+        }).join('')}
+      </div>
+      ${fb}
+    </article>
+    <p class="keys">Клавиши 1–${q.options.length} — выбрать ответ, Enter — дальше</p>`;
+}
+function vResult() {
+  const res = S.result; const quiz = curQuiz();
+  if (!res || !quiz) return vMissing();
+  const n = res.qs.length, sc = res.score;
+  const wrong = res.qs.filter(x => !(x.options[x.picked] && x.options[x.picked].ok));
+  const share = sc / n;
+  const msg = share === 1 ? 'Без единой ошибки.' : share >= 0.8 ? 'Почти идеально — посмотрите разбор ошибок ниже.' : share >= 0.5 ? 'Неплохо, но часть вопросов стоит повторить.' : 'Пока много ошибок. Повторите карточки и пройдите ещё раз.';
+  const rows = res.qs.slice().sort((a, b) => (a.options[a.picked].ok ? 1 : 0) - (b.options[b.picked].ok ? 1 : 0)).map(x => {
+    const good = x.options[x.picked].ok;
+    const it = x.item;
+    const ans = it.cat === 'date' ? `<b class="mono">${esc(it.answer)}</b>` : `<b>${esc(it.answer)}</b>`;
+    let yours = '';
+    if (!good) { const t = x.options[x.picked].text; yours = `<div class="yours">Ваш ответ: ${esc(t.length > 140 ? t.slice(0, 137) + '…' : t)}</div>`; }
+    return `<li><span class="mk ${good ? 'ok' : 'bad'}" aria-label="${good ? 'верно' : 'неверно'}">${good ? '✓' : '✗'}</span><div class="pair">${ans} — ${esc(it.prompt)}${yours}</div></li>`;
+  }).join('');
+  return `<div class="top"><button class="btn ghost" data-act="back-quiz">← ${esc(quiz.title)}</button></div>
+    <section class="section">
+      <div class="eyebrow">${esc(MODES[res.mode] || 'Тест')}${res.dir !== 'direct' ? ' · ' + esc((DIRS[res.dir] || '').toLowerCase()) : ''}</div>
+      <div class="score"><span class="big">${sc}</span><span class="of">из ${n}</span></div>
+      <p>${msg}</p>
+      <div class="actions">
+        <button class="btn primary" data-act="again">${res.mode === 'ticket' ? 'Новый билет' : 'Пройти ещё раз'}</button>
+        ${wrong.length ? `<button class="btn" data-act="retry">Повторить ошибки (${wrong.length})</button>` : ''}
+        <button class="btn ghost" data-act="back-quiz">К опросу</button>
+      </div>
+    </section>
+    <section class="section"><h2 class="h2">Разбор</h2><ol class="review">${rows}</ol></section>`;
+}
+function vList() {
+  const q = curQuiz(); if (!q) return vMissing();
+  const st = statsOf(q.id);
+  const groups = CAT_ORDER.filter(c => catItems(q, c).length).map(c => {
+    const items = catItems(q, c);
+    return `<section class="section"><h2 class="h2">${CATS[c].plural} · ${items.length}</h2><ul class="cards">${items.map(it => {
+      const s = status(st[it.id]);
+      const ttl = s === 'ok' ? 'выучено' : s === 'mid' ? 'в работе' : 'ещё не встречалось';
+      return `<li><i class="dot ${s === 'new' ? '' : s}" title="${ttl}"></i><span class="ans ${c === 'date' ? 'mono' : ''} ${S.hideAns ? 'hide' : ''}" ${S.hideAns ? 'data-act="reveal" role="button" tabindex="0" aria-label="Показать ответ"' : ''}>${esc(it.answer)}</span><span class="pr">${esc(it.prompt)}</span></li>`;
+    }).join('')}</ul></section>`;
+  }).join('');
+  return `<div class="top"><button class="btn ghost" data-act="back-quiz">← ${esc(q.title)}</button></div>
+    <header class="qhead"><div class="eyebrow">${esc(q.title)} · все карточки</div><h1>${esc(q.subtitle || q.title)}</h1></header>
+    <div class="row-between">
+      <label class="switch"><input type="checkbox" id="hide-answers" ${S.hideAns ? 'checked' : ''}> Прятать ответы (нажмите, чтобы открыть)</label>
+      <div class="legend"><span><i class="dot ok"></i>выучено</span><span><i class="dot mid"></i>в работе</span><span><i class="dot"></i>новое</span></div>
+    </div>
+    ${groups}`;
+}
+function vImport() {
+  const head = `<div class="top"><button class="btn ghost" data-act="home">← Все опросы</button></div>
+    <header class="qhead"><div class="eyebrow">Новый тест</div><h1>Добавить блиц-опрос</h1>
+    <p>Загрузите .docx с вопросами от преподавателя. Приложение найдёт таблицу и разберёт даты, термины и исторических личностей. Новый опрос станет отдельным тестом и сохранится в этом браузере.</p></header>`;
+  const I = S.imp;
+  if (!I || (!I.parsed && !I.busy)) {
+    return head + `<label class="drop" id="drop">
+        <input type="file" id="imp-file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+        <b>Перетащите файл сюда</b><span class="muted">или</span><span class="btn primary">Выбрать .docx</span>
+      </label>
+      ${I && I.error ? `<p class="err" role="alert">${esc(I.error)}</p>` : ''}
+      <div class="fmt"><b>Какой нужен файл</b><span>Такой же, как к блиц-опросу №3: таблица из двух столбцов с разделами-заголовками.</span>
+        <div style="overflow-x:auto"><table><tr><td>Дата</td><td>Событие</td></tr><tr><td>1380</td><td>Куликовская битва</td></tr><tr><td>Термин</td><td>Определение</td></tr><tr><td>Историческая личность</td><td>Деятельность</td></tr></table></div>
+        <span>Строку «Каждый билет состоит из … дат, … терминов и … имени» приложение тоже прочитает — из неё берётся состав билета.</span></div>`;
+  }
+  if (I.busy) return head + `<div class="empty">Читаем «${esc(I.name)}»…</div>`;
+  const p = I.parsed, e = I.edit;
+  const val = k => esc(e[k] != null ? e[k] : (p[k] != null ? p[k] : ''));
+  const tval = c => esc(e['t_' + c] != null ? e['t_' + c] : p.ticket[c]);
+  const warns = [];
+  CAT_ORDER.forEach(c => { if (!catItems(p, c).length) warns.push(`Не нашлось раздела «${CATS[c].plural}». Если он в документе есть, проверьте заголовок строки таблицы.`); });
+  const preview = CAT_ORDER.filter(c => catItems(p, c).length).map(c => `<h3>${CATS[c].plural} · ${catItems(p, c).length}</h3><ul class="cards">${catItems(p, c).map(it => `<li><span class="ans ${c === 'date' ? 'mono' : ''}">${esc(it.answer)}</span><span class="pr">${esc(it.prompt)}</span></li>`).join('')}</ul>`).join('');
+  const number = parseInt(e.number != null ? e.number : p.number, 10);
+  const id = Number.isFinite(number) ? 'blitz-' + number : p.fallbackId;
+  const exists = S.quizzes.find(x => x.id === id);
+  const saveBlock = S.confirm === 'replace' && exists
+    ? `<div class="confirm"><div>Опрос «${esc(exists.title)}» уже есть. Заменить его вопросами из этого файла? Ваш прогресс по совпадающим карточкам сохранится.</div><div class="acts"><button class="btn danger" data-act="imp-replace">Заменить</button><button class="btn ghost" data-act="cancel">Отмена</button></div></div>`
+    : `<div class="actions"><button class="btn primary" data-act="imp-save" ${I.saving ? 'disabled' : ''}>${I.saving ? 'Сохраняем…' : 'Сохранить опрос'}</button><button class="btn ghost" data-act="imp-reset">Выбрать другой файл</button></div>`;
+  return head + `<section class="section">
+      <h2 class="h2">Проверьте, что получилось · ${esc(I.name)}</h2>
+      <div class="fields">
+        <label class="field"><span>Номер</span><input id="imp-number" data-imp="number" inputmode="numeric" value="${val('number')}"></label>
+        <label class="field"><span>Название</span><input id="imp-title" data-imp="title" value="${val('title')}"></label>
+        <label class="field full"><span>Тема</span><input id="imp-subtitle" data-imp="subtitle" value="${val('subtitle')}"></label>
+      </div>
+      <div class="field"><span>Состав билета</span></div>
+      <div class="ticket-in">${CAT_ORDER.map(c => `<label class="field"><span>${CATS[c].plural}</span><input id="imp-t-${c}" data-imp="t_${c}" inputmode="numeric" value="${tval(c)}"></label>`).join('')}</div>
+      ${warns.map(w => `<div class="warn">${esc(w)}</div>`).join('')}
+      <div class="preview">${preview}</div>
+      ${I.saveError ? `<p class="err" role="alert">${esc(I.saveError)}</p>` : ''}
+      ${saveBlock}
+    </section>`;
+}
+
+/* ---------- render ---------- */
+function render() {
+  let html = '';
+  switch (S.view) {
+    case 'quiz': html = vQuiz(); break;
+    case 'run': html = vRun(); break;
+    case 'result': html = vResult(); break;
+    case 'list': html = vList(); break;
+    case 'import': html = vImport(); break;
+    default: html = vHome();
+  }
+  $('app').innerHTML = html;
+  const key = S.view + ':' + (S.run ? S.run.i : '');
+  if (key !== lastScrollKey) { lastScrollKey = key; window.scrollTo(0, 0); }
+  if (S.view === 'run') { const nb = $('next-btn'); if (nb) nb.focus({ preventScroll: true }); }
+}
+function go(view) { S.view = view; S.confirm = null; render(); }
+let toastTimer = 0;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2800); }
+
+/* ---------- docx import ---------- */
+const WNS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+const kids = (el, name) => Array.from(el.childNodes).filter(n => n.nodeType === 1 && n.localName === name);
+function pText(p) {
+  let s = '';
+  for (const el of Array.from(p.getElementsByTagNameNS(WNS, '*'))) {
+    const n = el.localName, inRun = el.parentNode && el.parentNode.localName === 'r';
+    if (n === 't') s += el.textContent;
+    else if (n === 'tab' && inRun) s += ' ';
+    else if ((n === 'br' || n === 'cr') && inRun) s += '\n';
+    else if (n === 'noBreakHyphen' && inRun) s += '-';
+  }
+  return s.replace(/[ \t ]+/g, ' ').split('\n').map(x => x.trim()).filter(Boolean).join('\n');
+}
+function cellText(tc) { return Array.from(tc.getElementsByTagNameNS(WNS, 'p')).map(pText).join(' ').replace(/\s+/g, ' ').trim(); }
+function headerCat(a, b, cur) {
+  const A = a.toLowerCase().replace(/ё/g, 'е').replace(/[.:]+$/, '').trim(), B = b.toLowerCase().replace(/ё/g, 'е').trim();
+  const aHdr = /^(дата|даты|год|годы|термин|термины|понятие|понятия|историческ[а-я]* (личност|деятел)[а-я]*|личност[а-я]*|персонали[а-я]*|деятел[а-я]*|имя|имена)$/.test(A);
+  const bHdr = /^(событи|определени|деятельност|описани|содержани|значени|характеристик)[а-я]*\.?$/.test(B);
+  if (!aHdr && !(bHdr && !cur && !isDateLike(a))) return null;
+  if (/^(дат|год)/.test(A) || /^событи/.test(B)) return 'date';
+  if (/^(термин|понят)/.test(A) || /^(определени|значени)/.test(B)) return 'term';
+  if (/(личност|деятел|персон|имя|имен)/.test(A) || /^(деятельност|характеристик)/.test(B)) return 'person';
+  return null;
+}
+async function parseDocx(file) {
+  if (!/\.docx$/i.test(file.name)) throw new Error('Нужен файл Word в формате .docx. Если у вас .doc, пересохраните его в Word как .docx.');
+  if (!window.JSZip) throw new Error('Не загрузился модуль чтения .docx. Проверьте интернет и обновите страницу.');
+  let zip;
+  try { zip = await window.JSZip.loadAsync(file); } catch (e) { throw new Error('Файл не открывается как .docx — возможно, он повреждён.'); }
+  const entry = zip.file('word/document.xml');
+  if (!entry) throw new Error('В файле нет текста документа Word. Проверьте, что это .docx.');
+  const xml = new DOMParser().parseFromString(await entry.async('string'), 'application/xml');
+  if (xml.getElementsByTagName('parsererror').length) throw new Error('Не получилось разобрать содержимое документа.');
+  const body = xml.getElementsByTagNameNS(WNS, 'body')[0];
+  const paras = [], items = [], cnt = { date: 0, term: 0, person: 0 };
+  let seenTable = false;
+  function parseTable(tbl) {
+    let cur = null;
+    for (const tr of kids(tbl, 'tr')) {
+      const cells = kids(tr, 'tc').map(cellText).filter(Boolean);
+      if (cells.length < 2) continue;
+      const a = cells[0], b = cells[1];
+      const h = headerCat(a, b, cur);
+      if (h) { cur = h; continue; }
+      if (/^[_\s.…-]*$/.test(a) || /^[_\s.…-]*$/.test(b)) continue;
+      let cat = cur;
+      if (!cat && isDateLike(a)) cat = 'date';
+      if (!cat) continue;
+      cnt[cat]++;
+      items.push({ id: cat[0] + cnt[cat], cat, answer: cat === 'date' ? fixDate(a) : a, prompt: b });
+    }
+  }
+  (function walk(node) {
+    for (const el of Array.from(node.childNodes)) {
+      if (el.nodeType !== 1) continue;
+      if (el.localName === 'p') paras.push({ text: pText(el), before: !seenTable });
+      else if (el.localName === 'tbl') { seenTable = true; parseTable(el); }
+      else if (el.localName === 'sdt') { const c = kids(el, 'sdtContent')[0]; if (c) walk(c); }
+    }
+  })(body);
+  if (!items.length) throw new Error('В документе не нашлось таблицы с вопросами. Нужна таблица из двух столбцов с разделами «Дата — Событие», «Термин — Определение», «Историческая личность — Деятельность».');
+
+  const before = paras.filter(p => p.before && p.text);
+  let title = '', subtitle = '', note = '';
+  const ti = before.findIndex(p => /блиц/i.test(p.text));
+  if (ti >= 0) {
+    const lines = before[ti].text.split('\n');
+    title = lines[0]; let rest = lines.slice(1).join(' ');
+    if (!rest) { const m = title.match(/^(.*?)\s*[«"“](.+)$/); if (m) { title = m[1]; rest = m[2]; } }
+    if (!rest) { const nx = before.slice(ti + 1).find(p => !/вопрос|включа|билет/i.test(p.text)); if (nx) rest = nx.text.replace(/\n/g, ' '); }
+    subtitle = rest;
+  } else if (before.length) {
+    title = before[0].text.split('\n')[0];
+  }
+  title = title.replace(/[\s.:;,]+$/, '').trim();
+  subtitle = subtitle.replace(/^[\s«"“'@]+|[\s»"”'@.]+$/g, '').replace(/\s+/g, ' ').trim();
+  const noteP = paras.find(p => /вопросы для подготовки|включают/i.test(p.text));
+  if (noteP) note = noteP.text.replace(/\s+/g, ' ').replace(/^вопросы для подготовки включают\s*/i, '').replace(/(\d)\s*-+\s*([XVI])/g, '$1–$2').trim();
+  if (note) note = note.charAt(0).toUpperCase() + note.slice(1);
+  let number = null;
+  const nm = title.match(/№\s*(\d+)/) || file.name.match(/(?:блиц|blits|blitz|опрос|opros)[^\d]{0,4}(\d+)/i);
+  if (nm) number = +nm[1];
+  if (!title) title = number != null ? 'Блиц-опрос №' + number : 'Блиц-опрос';
+
+  const ticket = { date: 2, term: 2, person: 1 };
+  const tp = paras.find(p => /билет/i.test(p.text) && /\d/.test(p.text) && /(дат|термин|им[яеё]н|личност)/i.test(p.text));
+  if (tp) {
+    const t = tp.text.toLowerCase().replace(/ё/g, 'е');
+    const g = re => { const m = t.match(re); return m ? +m[1] : 0; };
+    const parsed = { date: g(/(\d+)\s*дат/), term: g(/(\d+)\s*термин/), person: g(/(\d+)\s*(?:им[яе]|личност|персон|деятел)/) };
+    if (parsed.date + parsed.term + parsed.person > 0) Object.assign(ticket, parsed);
+  }
+  CAT_ORDER.forEach(c => { if (!items.some(i => i.cat === c)) ticket[c] = 0; });
+  return { title, subtitle, note, number, ticket, items, fallbackId: 'blitz-' + Date.now().toString(36) };
+}
+async function handleFile(file) {
+  S.imp = { busy: true, name: file.name, edit: {} }; S.confirm = null; render();
+  try { const parsed = await parseDocx(file); S.imp = { parsed, name: file.name, edit: {} }; }
+  catch (e) { S.imp = { error: (e && e.message) || 'Не удалось прочитать файл.', edit: {} }; }
+  render();
+}
+async function saveImport(force) {
+  const I = S.imp; if (!I || !I.parsed) return;
+  const p = I.parsed, e = I.edit;
+  const fld = k => (e[k] != null ? String(e[k]) : String(p[k] ?? '')).trim();
+  const numRaw = parseInt(fld('number'), 10);
+  const number = Number.isFinite(numRaw) ? numRaw : null;
+  const id = number != null ? 'blitz-' + number : p.fallbackId;
+  if (!force && S.quizzes.some(x => x.id === id)) { S.confirm = 'replace'; render(); return; }
+  const ticket = {};
+  CAT_ORDER.forEach(c => { const v = parseInt(e['t_' + c] != null ? e['t_' + c] : p.ticket[c], 10); ticket[c] = Number.isFinite(v) ? Math.max(0, Math.min(20, v)) : 0; });
+  const doc = {
+    title: fld('title') || (number != null ? 'Блиц-опрос №' + number : 'Блиц-опрос'),
+    subtitle: fld('subtitle'), note: p.note || '', number, order: number != null ? number : 999,
+    ticket, items: p.items, source: I.name || '', updatedAt: Date.now(),
+  };
+  I.saving = true; I.saveError = ''; S.confirm = null; render();
+  try {
+    const local = lsGet(LS_QUIZZES, {}) || {};
+    local[id] = doc;
+    localStorage.setItem(LS_QUIZZES, JSON.stringify(local));
+    loadQuizzes();
+    S.imp = null; S.qid = id;
+    go('quiz'); toast('Опрос сохранён');
+  } catch (err) {
+    I.saving = false;
+    I.saveError = 'Браузер не дал сохранить опрос. Так бывает в режиме инкогнито или когда закончилось место для сайтов. Откройте сайт в обычном окне и попробуйте ещё раз.';
+    render();
+  }
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  const act = el.dataset.act;
+  switch (act) {
+    case 'home': S.run = null; go('home'); break;
+    case 'open': S.qid = el.dataset.id; S.confirm = null; go('quiz'); break;
+    case 'start': startRun(el.dataset.mode); break;
+    case 'dir': S.dir = el.dataset.dir; lsSet(LS_DIR, S.dir); render(); break;
+    case 'pick': pick(+el.dataset.i); break;
+    case 'next': next(); break;
+    case 'exit': clearTimeout(autoTimer); S.run = null; go('quiz'); break;
+    case 'again': {
+      const res = S.result; if (!res) break;
+      if (res.mode === 'retry') startRun('retry', res.retryItems); else startRun(res.mode);
+      break;
+    }
+    case 'retry': {
+      const res = S.result; if (!res) break;
+      startRun('retry', res.qs.filter(x => !x.options[x.picked].ok).map(x => x.item));
+      break;
+    }
+    case 'back-quiz': S.result = null; go('quiz'); break;
+    case 'list': go('list'); break;
+    case 'reveal': el.classList.toggle('shown'); break;
+    case 'import': S.imp = null; S.confirm = null; go('import'); break;
+    case 'imp-save': saveImport(false); break;
+    case 'imp-replace': saveImport(true); break;
+    case 'imp-reset': S.imp = null; S.confirm = null; render(); break;
+    case 'ask-reset': S.confirm = 'reset'; render(); break;
+    case 'ask-delete': S.confirm = 'delete'; render(); break;
+    case 'cancel': S.confirm = null; render(); break;
+    case 'do-reset': {
+      const q = curQuiz(); if (!q) break;
+      S.progress[q.id] = { stats: {}, runs: [] }; saveProgress(q.id); S.confirm = null; render(); toast('Прогресс сброшен');
+      break;
+    }
+    case 'do-delete': {
+      const q = curQuiz(); if (!q || !q.local) break;
+      S.confirm = null;
+      const local = lsGet(LS_QUIZZES, {}) || {};
+      delete local[q.id];
+      lsSet(LS_QUIZZES, local);
+      loadQuizzes();
+      go(curQuiz() ? 'quiz' : 'home'); toast('Опрос удалён');
+      break;
+    }
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.target && e.target.closest && e.target.closest('input, textarea, select')) {
+    return;
+  }
+  if (e.target && e.target.dataset && e.target.dataset.act === 'reveal' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.target.classList.toggle('shown'); return; }
+  if (S.view !== 'run' || !S.run || e.metaKey || e.ctrlKey || e.altKey) return;
+  const q = S.run.qs[S.run.i];
+  if (/^[1-9]$/.test(e.key) && q.picked === null) {
+    const i = +e.key - 1; if (i < q.options.length) { e.preventDefault(); pick(i); }
+  } else if ((e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') && q.picked !== null) {
+    e.preventDefault(); next();
+  }
+});
+document.addEventListener('change', e => {
+  if (e.target.id === 'imp-file' && e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+  if (e.target.id === 'hide-answers') { S.hideAns = e.target.checked; lsSet(LS_HIDE, S.hideAns); render(); }
+});
+document.addEventListener('input', e => {
+  const k = e.target.dataset && e.target.dataset.imp;
+  if (k && S.imp) { S.imp.edit[k] = e.target.value; if (S.confirm === 'replace') { S.confirm = null; } }
+});
+document.addEventListener('dragover', e => { const d = e.target.closest && e.target.closest('#drop'); if (d) { e.preventDefault(); d.classList.add('over'); } });
+document.addEventListener('dragleave', e => { const d = e.target.closest && e.target.closest('#drop'); if (d) d.classList.remove('over'); });
+document.addEventListener('drop', e => {
+  const d = e.target.closest && e.target.closest('#drop');
+  if (!d) return;
+  e.preventDefault(); d.classList.remove('over');
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+
+/* ---------- data wiring ---------- */
+function sortQuizzes(list) { return list.slice().sort((a, b) => (a.order - b.order) || a.title.localeCompare(b.title, 'ru')); }
+const LS_QUIZZES = 'blitz-quizzes-v1';
+function loadQuizzes() {
+  let builtin = [];
+  try { builtin = JSON.parse($('quiz-data').textContent); } catch (e) { builtin = []; }
+  const map = new Map();
+  (Array.isArray(builtin) ? builtin : []).forEach(d => { const q = d && d.id && cleanQuiz(String(d.id), d); if (q) map.set(q.id, q); });
+  const local = lsGet(LS_QUIZZES, {}) || {};
+  Object.keys(local).forEach(id => { const q = cleanQuiz(id, local[id]); if (q) { q.local = true; map.set(id, q); } });
+  S.quizzes = sortQuizzes([...map.values()]);
+}
+// another open tab changed progress or quizzes
+window.addEventListener('storage', e => {
+  if (e.key === LS_QUIZZES) loadQuizzes();
+  else if (e.key === LS_PROGRESS) S.progress = lsGet(LS_PROGRESS, {}) || {};
+  else return;
+  if (S.view !== 'run' && S.view !== 'import') render();
+});
+loadQuizzes();
+render();
+})();
+</script>
+</body>
+</html>
